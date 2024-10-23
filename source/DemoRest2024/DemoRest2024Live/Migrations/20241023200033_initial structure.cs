@@ -13,86 +13,86 @@ namespace DemoRest2024Live.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Topics",
+                name: "Services",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Topics", x => x.Id);
+                    table.PrimaryKey("PK_Services", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Posts",
+                name: "Reservations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Body = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    TopicId = table.Column<int>(type: "integer", nullable: false)
+                    Date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    ServiceId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Posts", x => x.Id);
+                    table.PrimaryKey("PK_Reservations", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Posts_Topics_TopicId",
-                        column: x => x.TopicId,
-                        principalTable: "Topics",
+                        name: "FK_Reservations_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Comments",
+                name: "Reviews",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Content = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    PostId = table.Column<int>(type: "integer", nullable: false)
+                    Rating = table.Column<int>(type: "integer", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    ReservationId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Comments_Posts_PostId",
-                        column: x => x.PostId,
-                        principalTable: "Posts",
+                        name: "FK_Reviews_Reservations_ReservationId",
+                        column: x => x.ReservationId,
+                        principalTable: "Reservations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Comments_PostId",
-                table: "Comments",
-                column: "PostId");
+                name: "IX_Reservations_ServiceId",
+                table: "Reservations",
+                column: "ServiceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Posts_TopicId",
-                table: "Posts",
-                column: "TopicId");
+                name: "IX_Reviews_ReservationId",
+                table: "Reviews",
+                column: "ReservationId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Comments");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
-                name: "Posts");
+                name: "Reservations");
 
             migrationBuilder.DropTable(
-                name: "Topics");
+                name: "Services");
         }
     }
 }

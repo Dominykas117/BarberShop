@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DemoRest2024Live.Migrations
 {
     [DbContext(typeof(ForumDbContext))]
-    [Migration("20240917065057_initial structure")]
+    [Migration("20241023200033_initial structure")]
     partial class initialstructure
     {
         /// <inheritdoc />
@@ -25,7 +25,34 @@ namespace DemoRest2024Live.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Comment", b =>
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Reservation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -37,95 +64,65 @@ namespace DemoRest2024Live.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Post", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TopicId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TopicId");
-
-                    b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Topic", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsBlocked")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Topics");
+                    b.HasIndex("ReservationId");
+
+                    b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Comment", b =>
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Service", b =>
                 {
-                    b.HasOne("DemoRest2024Live.Data.Entities.Post", "Post")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Reservation", b =>
+                {
+                    b.HasOne("DemoRest2024Live.Data.Entities.Service", "Service")
                         .WithMany()
-                        .HasForeignKey("PostId")
+                        .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Post");
+                    b.Navigation("Service");
                 });
 
-            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Post", b =>
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Review", b =>
                 {
-                    b.HasOne("DemoRest2024Live.Data.Entities.Topic", "Topic")
+                    b.HasOne("DemoRest2024Live.Data.Entities.Reservation", "Reservation")
                         .WithMany()
-                        .HasForeignKey("TopicId")
+                        .HasForeignKey("ReservationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Topic");
+                    b.Navigation("Reservation");
                 });
 #pragma warning restore 612, 618
         }

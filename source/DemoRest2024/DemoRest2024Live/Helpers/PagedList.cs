@@ -53,4 +53,42 @@ public class PagedList<T> : List<T>
         
         return new PagedList<T>(items, count, pageNumber, pageSize);
     }
+
+
+
+
+    public PaginationMetadata CreatePaginationMetadata(LinkGenerator linkGenerator, HttpContext httpContext, string endpointName, object routeValues)
+    {
+        return new PaginationMetadata(TotalCount, PageSize, CurrentPage, TotalPages,
+            GetPreviousPageLink(linkGenerator, httpContext, endpointName, routeValues),
+            GetNextPageLink(linkGenerator, httpContext, endpointName, routeValues));
+    }
+
+    public string? GetPreviousPageLink(LinkGenerator linkGenerator, HttpContext httpContext, string endpointName, object routeValues)
+    {
+        if (!HasPrevious) return null;
+
+        var routeWithPagination = new RouteValueDictionary(routeValues)
+    {
+        { "pageNumber", CurrentPage - 1 },
+        { "pageSize", PageSize }
+    };
+
+        return linkGenerator.GetUriByName(httpContext, endpointName, routeWithPagination);
+    }
+
+    public string? GetNextPageLink(LinkGenerator linkGenerator, HttpContext httpContext, string endpointName, object routeValues)
+    {
+        if (!HasNext) return null;
+
+        var routeWithPagination = new RouteValueDictionary(routeValues)
+    {
+        { "pageNumber", CurrentPage + 1 },
+        { "pageSize", PageSize }
+    };
+
+        return linkGenerator.GetUriByName(httpContext, endpointName, routeWithPagination);
+    }
+
+
 }

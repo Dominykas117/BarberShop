@@ -6,9 +6,9 @@ namespace DemoRest2024Live.Data;
 public class ForumDbContext : DbContext
 {
     private readonly IConfiguration _configuration;
-    public DbSet<Topic> Topics { get; set; }
-    public DbSet<Post> Posts { get; set; }
-    public DbSet<Comment> Comments { get; set; }
+    public DbSet<Service> Services { get; set; }
+    public DbSet<Reservation> Reservations { get; set; }
+    public DbSet<Review> Reviews { get; set; }
     
     public ForumDbContext(IConfiguration configuration)
     {

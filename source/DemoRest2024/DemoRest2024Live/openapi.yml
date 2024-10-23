@@ -1,0 +1,426 @@
+openapi: 3.0.0
+info:
+  title: BarberSchool API
+  description: API for managing services, reservations, and reviews at a barberschool
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+
+paths:
+  /services:
+    get:
+      summary: List all services
+      operationId: getAllServices
+      tags:
+        - service
+      responses:
+        "200":
+          description: An array of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/service'
+        "404":
+          $ref: "#/components/responses/notFound"
+    post:
+      summary: Create a service
+      operationId: createService
+      tags:
+        - service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/service'
+      responses:
+        "201":
+          $ref: "#/components/responses/singleService"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+
+  /services/{serviceId}:
+    parameters:
+      - $ref: '#/components/parameters/serviceId'
+    get:
+      summary: Get a service by ID
+      operationId: getService
+      tags:
+        - service
+      responses:
+        "200":
+          $ref: "#/components/responses/singleService"
+        "404":
+          $ref: "#/components/responses/notFound"
+    put:
+      summary: Update a service
+      operationId: updateService
+      tags:
+        - service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateService'
+      responses:
+        "200":
+          $ref: "#/components/responses/singleService"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+    delete:
+      summary: Delete a service by ID
+      operationId: deleteService
+      tags:
+        - service
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "204":
+          description: Service deleted
+
+  /services/{serviceId}/reservations:
+    parameters:
+      - $ref: '#/components/parameters/serviceId'
+    get:
+      summary: List all reservations for a service
+      operationId: getReservations
+      tags:
+        - reservation
+      responses:
+        "200":
+          description: An array of reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/reservation'
+    post:
+      summary: Create a reservation for a service
+      operationId: createReservation
+      tags:
+        - reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/reservation'
+      responses:
+        "201":
+          $ref: "#/components/responses/singleReservation"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+
+
+  /services/{serviceId}/reservations/{reservationId}:
+    parameters:
+      - $ref: '#/components/parameters/serviceId'
+      - $ref: '#/components/parameters/reservationId'
+    get:
+      summary: Get a single reservation
+      operationId: getReservation
+      tags:
+        - reservation
+      responses:
+        "200":
+          description: Detailed information on a single reservation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reservation'
+    put:
+      summary: Update a reservation
+      operationId: updateReservation
+      tags:
+        - reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/reservation'
+      responses:
+        "200":
+          $ref: "#/components/responses/singleReservation"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+    delete:
+      summary: Delete a reservation
+      operationId: deleteReservation
+      tags:
+        - reservation
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "204":
+          description: Reservation deleted
+
+  /services/{serviceId}/reservations/{reservationId}/reviews:
+    parameters:
+    - $ref: '#/components/parameters/serviceId'
+    - $ref: '#/components/parameters/reservationId'
+    get:
+      summary: List all reviews for a reservation
+      operationId: getReviews
+      tags:
+        - review
+      responses:
+        "200":
+          description: An array of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/review'
+    post:
+      summary: Create a review for a reservation
+      operationId: createReview
+      tags:
+        - review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/review'
+      responses:
+        "201":
+          $ref: "#/components/responses/singleReview"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+
+  /services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}:
+    parameters:
+      - $ref: '#/components/parameters/serviceId'
+      - $ref: '#/components/parameters/reservationId'
+      - $ref: '#/components/parameters/reviewId'
+    get:
+      summary: Get a single review
+      operationId: getReview
+      tags:
+        - review
+      responses:
+        "200":
+          description: Detailed information on a single review
+    put:
+      summary: Update a review
+      operationId: updateReview
+      tags:
+        - review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/review'
+      responses:
+        "200":
+          $ref: "#/components/responses/singleReview"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+    delete:
+      summary: Delete a review
+      operationId: deleteReview
+      tags:
+        - review
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "204":
+          description: Review deleted
+
+
+
+components:
+  schemas:
+    service:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the service
+        name:
+          type: string
+          description: Name of the service
+        price:
+          type: number
+          description: Price of the service
+    createService:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          minLength: 2
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_]+$"  # Only allows letters, numbers, and underscores
+          type: string
+          description: Name of the service
+        price:
+          minimum: 0
+          type: number
+          format: double
+          description: Price of the service
+    updateService:
+      type: object
+      properties:
+        name:
+          minLength: 2
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_]+$"  # Only allows letters, numbers, and underscores
+          type: string
+          description: Name of the service
+        price:
+          minimum: 0
+          type: number
+          format: double
+          description: Price of the service
+    reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the reservation
+        date:
+          type: string
+          format: date-time
+          description: Date and time of the reservation
+        status:
+          type: string
+          description: Current status of the reservation
+          example: 'confirmed'         
+    review:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the review
+        content:
+          type: string
+          description: Content of the review
+        rating:
+          type: integer
+          description: Rating given in the review
+    problemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type.
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type.
+        status:
+          type: integer
+          format: int32
+          description: The HTTP status code applicable to this problem.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence of the problem.
+        errors:
+          type: object
+          description: A map of detailed errors for every property ([property => error])
+  responses:
+    singleService:
+      description: Details of a single service
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/service"
+    singleReservation:
+      description: Details of a single reservation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/reservation"
+    singleReview:
+      description: Details of a single review
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/review"
+    unprocessableEntity:
+      description: Unprocessable entity response
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            items:
+              $ref: "#/components/schemas/problemDetails"
+          example:
+            type: "https://tools.ietf.org/html/rfc4918#section-11.2"
+            title: "Unprocessable Entity"
+            status: 422
+            errors:
+              Name:
+                - "'Name' must not be empty."
+    badRequest:
+      description: Bad request response
+    notFound:
+      description: Resource was not found
+  parameters:
+    serviceId:
+      name: serviceId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: The unique identifier of the topic
+    reservationId:
+      name: reservationId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: The unique identifier of the post
+    reviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: The unique identifier of the comment
+  
+tags:
+  - name: service
+    description: Operations related to services
+  - name: reservation
+    description: Operations related to reservations
+  - name: review
+    description: Operations related to reviews
+
+externalDocs:
+  description: Find more info here
+  url: https://example.com/docs
