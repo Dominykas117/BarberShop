@@ -85,11 +85,7 @@ servicesGroups.MapGet("/services", async ([AsParameters] SearchParameters search
     return new ResourceDto<ResourceDto<ServiceDto>[]>(resources, links);
 }).WithName("GetServices");
 
-//servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
-//{
-//    var service = await dbContext.Services.FindAsync(serviceId);
-//    return service == null ? Results.NotFound() : TypedResults.Ok(service.ToDto());
-//}).WithName("GetService").AddEndpointFilter<ETagFilter>();
+
 servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
 {
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
@@ -109,21 +105,7 @@ servicesGroups.MapPost("/services", async (CreateServiceDto dto, LinkGenerator l
     
     return TypedResults.Created(links[0].Href, resource);
 }).WithName("CreateService");
-//servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int serviceId, ForumDbContext dbContext) =>
-//{
-//    var service = await dbContext.Services.FindAsync(serviceId);
-//    if (service == null)
-//    {
-//        return Results.NotFound();
-//    }
 
-//    service.Price = dto.Price;
-
-//    dbContext.Services.Update(service);
-//    await dbContext.SaveChangesAsync();
-
-//    return Results.Ok(service.ToDto());
-//}).WithName("UpdateService");
 servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int serviceId, ForumDbContext dbContext) =>
 {
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
@@ -140,19 +122,7 @@ servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int 
 }).WithName("UpdateService");
 
 
-//servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
-//{
-//    var service = await dbContext.Services.FindAsync(serviceId);
-//    if (service == null)
-//    {
-//        return Results.NotFound();
-//    }
 
-//    dbContext.Services.Remove(service);
-//    await dbContext.SaveChangesAsync();
-
-//    return Results.NoContent();
-//}).WithName("RemoveService");
 
 servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
 {
@@ -228,22 +198,6 @@ servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceI
 }).WithName("CreateReservation");
 
 
-//servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
-//{
-//    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId);
-//    if (reservation == null)
-//    {
-//        return Results.NotFound();
-//    }
-
-//    reservation.Status = dto.Status;
-
-//    dbContext.Reservations.Update(reservation);
-//    await dbContext.SaveChangesAsync();
-
-//    return Results.Ok(reservation.ToDto());
-//}).WithName("UpdateReservation");
-
 servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
     var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId && !r.IsDeleted);
@@ -264,20 +218,6 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", asyn
     return Results.Ok(reservation.ToDto());
 }).WithName("UpdateReservation");
 
-
-//servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
-//{
-//    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId);
-//    if (reservation == null)
-//    {
-//        return Results.NotFound();
-//    }
-
-//    dbContext.Reservations.Remove(reservation);
-//    await dbContext.SaveChangesAsync();
-
-//    return Results.NoContent();
-//}).WithName("RemoveReservation");
 
 servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
@@ -370,22 +310,6 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/review
     return Results.Ok(review.ToDto());
 }).WithName("UpdateReview");
 
-
-//servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
-//{
-//    // Find the review and ensure it is linked to the correct reservation and service
-//    var review = await dbContext.Reviews.FirstOrDefaultAsync(r => r.Id == reviewId && r.ReservationId == reservationId);
-//    if (review == null)
-//    {
-//        return Results.NotFound();
-//    }
-
-//    dbContext.Reviews.Remove(review);
-//    await dbContext.SaveChangesAsync();
-
-//    return Results.NoContent();
-//}).WithName("RemoveReview");
-
 servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
 {
     var review = await dbContext.Reviews.FirstOrDefaultAsync(r => r.Id == reviewId && r.ReservationId == reservationId && !r.IsDeleted);
@@ -405,22 +329,6 @@ servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/rev
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-
-// var postsGroup = app.MapGroup("/api/topics/{topicId}").AddFluentValidationAutoValidation();
-// postsGroup.MapGet("posts", (int topicId) => { });
-// postsGroup.MapPut("posts/{postId}", (int topicId, int postId, UpdatePostDto dto) => { });
-//
-// var commentsGroup = app.MapGroup("/api/topics/{topicId}/posts/{postId}").AddFluentValidationAutoValidation();
-//
-// commentsGroup.MapPut("comments/{commentId}", (int topicId, int postId, int commentId, UpdateCommentDto dto, DbContext dbContext, CancellationToken cancellationToken) =>
-// {
-//     
-// });
-
-// commentsGroup.MapPut("comments/{commentId}", ([AsParameters] UpdateCommentParameters parameters) =>
-// {
-//     
-// });
 
 app.MapControllers();
 app.UseResponseCaching();
@@ -559,20 +467,6 @@ public record CreateReservationDto(DateTimeOffset Date)
         }
     }
 };
-
-
-//public record UpdateReservationDto(ReservationStatus Status)
-//{
-//    public class UpdateReservationDtoValidator : AbstractValidator<UpdateReservationDto>
-//    {
-//        public UpdateReservationDtoValidator()
-//        {
-//            RuleFor(x => x.Status)
-//                .NotEmpty().WithMessage("Status is required.")
-//                .IsInEnum().WithMessage("Invalid reservation status.");
-//        }
-//    }
-//};
 
 public record UpdateReservationDto(string Status)
 {
