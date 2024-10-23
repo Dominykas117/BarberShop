@@ -22,7 +22,7 @@ This project is a .NET Core-based RESTful API designed to manage services, reser
 
 - **Service Management:** Create, update, delete, and retrieve services.
 - **Reservation Management:** Create, update, delete, and retrieve reservations linked to services.
-- **Review Management:** Add and manage reviews for reservations.
+- **Review Management:** Create, update, delete, and retrieve reviews linked to reservations.
 - **Pagination:** Supports paginated listing of services, reservations, and reviews.
 - **Soft Delete:** Uses an `IsDeleted` flag instead of permanently deleting data.
 - **Automatic Validation:** Uses FluentValidation for input validation.
@@ -49,8 +49,7 @@ This project is a .NET Core-based RESTful API designed to manage services, reser
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-repository-url.git
-   cd BarberSchool-API
+   git clone https://github.com/Dominykas117/BarberShop
    ```
 
 2. **Setup database connection string**
@@ -84,8 +83,8 @@ Here is a brief overview of the API endpoints:
 
 ### Services
 
-- `GET /api/services` - Retrieve all services (excluding those marked as deleted).
-- `GET /api/services/{serviceId}` - Get a single service by ID (if not marked as deleted).
+- `GET /api/services` - Retrieve all services.
+- `GET /api/services/{serviceId}` - Get a single service by ID.
 - `POST /api/services` - Create a new service.
 - `PUT /api/services/{serviceId}` - Update an existing service.
 - `DELETE /api/services/{serviceId}` - Mark a service as deleted and return the updated resource.
