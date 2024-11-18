@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DemoRest2024Live.Migrations
 {
     /// <inheritdoc />
-    public partial class initialstructure : Migration
+    public partial class Initialstructure : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

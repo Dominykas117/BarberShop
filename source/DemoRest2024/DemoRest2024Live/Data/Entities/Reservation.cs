@@ -9,6 +9,7 @@ public class Reservation
     public ReservationStatus Status { get; set; } = ReservationStatus.Confirmed;
     public bool IsDeleted { get; set; } = false;
     public required int ServiceId { get; set; }
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public Service Service { get; set; }
 

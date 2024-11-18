@@ -3,7 +3,7 @@ namespace DemoRest2024Live.Helpers;
 public class SearchParameters
 {
     private int _pageNumber = 1;
-    private int _pageSize = 2;
+    private int _pageSize = 10;
 
     private const int MaxPageSize = 50;
     

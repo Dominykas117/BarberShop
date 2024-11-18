@@ -103,7 +103,7 @@ namespace DemoRest2024Live.Migrations
             modelBuilder.Entity("DemoRest2024Live.Data.Entities.Reservation", b =>
                 {
                     b.HasOne("DemoRest2024Live.Data.Entities.Service", "Service")
-                        .WithMany()
+                        .WithMany("Reservations")
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -114,12 +114,22 @@ namespace DemoRest2024Live.Migrations
             modelBuilder.Entity("DemoRest2024Live.Data.Entities.Review", b =>
                 {
                     b.HasOne("DemoRest2024Live.Data.Entities.Reservation", "Reservation")
-                        .WithMany()
+                        .WithMany("Reviews")
                         .HasForeignKey("ReservationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Reservation");
+                });
+
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Reservation", b =>
+                {
+                    b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("DemoRest2024Live.Data.Entities.Service", b =>
+                {
+                    b.Navigation("Reservations");
                 });
 #pragma warning restore 612, 618
         }

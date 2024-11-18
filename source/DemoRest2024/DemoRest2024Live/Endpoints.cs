@@ -103,21 +103,7 @@ public static class Endpoints
         }).Produces<ReservationDto>(200).Produces(404);
 
 
-        // Update reservation by ID
-        //servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, UpdateReservationDto dto, ForumDbContext dbContext) =>
-        //{
-        //    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId);  // Ensure ServiceId matches
-        //    if (reservation == null)
-        //    {
-        //        return Results.NotFound("Reservation not found.");
-        //    }
 
-        //    reservation.Status = dto.Status;
-        //    dbContext.Reservations.Update(reservation);
-        //    await dbContext.SaveChangesAsync();
-
-        //    return Results.Ok(reservation.ToDto());
-        //}).Produces<ReservationDto>(200).Produces(400).Produces(404).Produces(422);
 
         servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, UpdateReservationDto dto, ForumDbContext dbContext) =>
         {

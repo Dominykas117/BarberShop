@@ -8,6 +8,11 @@ dotnet add package FluentValidation
 dotnet add package FluentValidation.DependencyInjectionExtensions
 dotnet add package SharpGrip.FluentValidation.AutoValidation.Endpoints
 
+
+// Microsoft.AspNetCore.Identity
+// Microsoft.AspNetCore.Identity.EntityFrameworkCore
+// Microsoft.AspNetCore.Authentication.JwtBearer
+
 */
 
 using System.Text.Json;
@@ -124,22 +129,61 @@ servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int 
 
 
 
+//servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
+//{
+//    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+//    if (service == null)
+//    {
+//        return Results.NotFound();
+//    }
+
+//    // Mark the service as deleted instead of removing it
+//    service.IsDeleted = true;
+//    dbContext.Services.Update(service);
+//    await dbContext.SaveChangesAsync();
+
+//    // Return the updated service indicating it was marked as deleted
+//    return Results.Ok(service.ToDto());
+//}).WithName("RemoveService");
+
 servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
 {
-    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    // Retrieve the service with the given ID and check if it is already deleted
+    var service = await dbContext.Services
+        .Include(s => s.Reservations) // Include related reservations
+        .ThenInclude(r => r.Reviews) // Include related reviews for each reservation
+        .FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+
     if (service == null)
     {
         return Results.NotFound();
     }
 
-    // Mark the service as deleted instead of removing it
+    // Mark the service as deleted
     service.IsDeleted = true;
-    dbContext.Services.Update(service);
+
+    // Mark all related reservations as deleted
+    foreach (var reservation in service.Reservations)
+    {
+        reservation.IsDeleted = true;
+
+        // Mark all reviews related to this reservation as deleted
+        foreach (var review in reservation.Reviews)
+        {
+            review.IsDeleted = true;
+            dbContext.Reviews.Update(review); // Explicitly update the review state
+        }
+
+        dbContext.Reservations.Update(reservation); // Explicitly update the reservation state
+    }
+
+    dbContext.Services.Update(service); // Update the service state
     await dbContext.SaveChangesAsync();
 
-    // Return the updated service indicating it was marked as deleted
+    // Return the updated service indicating it and all its nested entities were marked as deleted
     return Results.Ok(service.ToDto());
 }).WithName("RemoveService");
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 // Add reservation-related endpoints
@@ -182,6 +226,13 @@ servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}", asyn
 
 servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceId, CreateReservationDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
     // Create a new reservation associated with the given serviceId
     var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date};
     dbContext.Reservations.Add(reservation);
@@ -200,6 +251,13 @@ servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceI
 
 servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
     var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId && !r.IsDeleted);
     if (reservation == null)
     {
@@ -219,9 +277,37 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", asyn
 }).WithName("UpdateReservation");
 
 
+//servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
+//{
+//    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId && !r.IsDeleted);
+//    if (reservation == null)
+//    {
+//        return Results.NotFound();
+//    }
+
+//    // Mark the reservation as deleted instead of removing it
+//    reservation.IsDeleted = true;
+//    dbContext.Reservations.Update(reservation);
+//    await dbContext.SaveChangesAsync();
+
+//    // Return the updated reservation indicating it was marked as deleted
+//    return Results.Ok(reservation.ToDto());
+//}).WithName("RemoveReservation");
+
 servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
-    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId && !r.IsDeleted);
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
+    // Find the reservation and ensure it's not already deleted
+    var reservation = await dbContext.Reservations
+        .Include(r => r.Reviews) // Include related reviews
+        .FirstOrDefaultAsync(r => r.Id == reservationId && r.ServiceId == serviceId && !r.IsDeleted);
+
     if (reservation == null)
     {
         return Results.NotFound();
@@ -229,12 +315,21 @@ servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", a
 
     // Mark the reservation as deleted instead of removing it
     reservation.IsDeleted = true;
-    dbContext.Reservations.Update(reservation);
+
+    // Mark all related reviews as deleted
+    foreach (var review in reservation.Reviews)
+    {
+        review.IsDeleted = true;
+        dbContext.Reviews.Update(review); // Update the state of each review to reflect the change
+    }
+
+    dbContext.Reservations.Update(reservation); // Update the state of the reservation
     await dbContext.SaveChangesAsync();
 
-    // Return the updated reservation indicating it was marked as deleted
+    // Return the updated reservation indicating it and its reviews were marked as deleted
     return Results.Ok(reservation.ToDto());
 }).WithName("RemoveReservation");
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 // Add review-related endpoints
@@ -276,6 +371,20 @@ servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/review
 
 servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", async (int serviceId, int reservationId, CreateReviewDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
+    // Check if the service or reservation is deleted
+    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && !r.IsDeleted);
+    if (reservation == null)
+    {
+        return Results.NotFound();
+    }
+
     // Create a new review and associate it with the correct reservation
     var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating };
     dbContext.Reviews.Add(review);
@@ -293,6 +402,20 @@ servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/revie
 
 servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (UpdateReviewDto dto, int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
 {
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
+    // Check if the service or reservation is deleted
+    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && !r.IsDeleted);
+    if (reservation == null)
+    {
+        return Results.NotFound();
+    }
+
     // Find the review and ensure it is linked to the correct reservation and service
     var review = await dbContext.Reviews.FirstOrDefaultAsync(r => r.Id == reviewId && r.ReservationId == reservationId && !r.IsDeleted);
     if (review == null)
@@ -312,6 +435,20 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/review
 
 servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
 {
+    // Check if the service or reservation is deleted
+    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (service == null)
+    {
+        return Results.NotFound();
+    }
+
+    // Check if the service or reservation is deleted
+    var reservation = await dbContext.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId && !r.IsDeleted);
+    if (reservation == null)
+    {
+        return Results.NotFound();
+    }
+
     var review = await dbContext.Reviews.FirstOrDefaultAsync(r => r.Id == reviewId && r.ReservationId == reservationId && !r.IsDeleted);
     if (review == null)
     {

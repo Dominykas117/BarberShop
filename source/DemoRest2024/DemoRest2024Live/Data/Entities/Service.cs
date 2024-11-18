@@ -6,6 +6,8 @@ public class Service
     public required string Name { get; set; }
     public required decimal Price { get; set; }
     public bool IsDeleted { get; set; } = false;
+    public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+
 
     public ServiceDto ToDto()
     {
