@@ -15,14 +15,19 @@ dotnet add package SharpGrip.FluentValidation.AutoValidation.Endpoints
 
 */
 
+using System.Text;
 using System.Text.Json;
 using DemoRest2024Live;
+using DemoRest2024Live.Auth.Model;
 using DemoRest2024Live.Data;
 using DemoRest2024Live.Data.Entities;
 using DemoRest2024Live.Helpers;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Results;
 using SharpGrip.FluentValidation.AutoValidation.Shared.Extensions;
@@ -40,6 +45,26 @@ builder.Services.AddFluentValidationAutoValidation(configuration =>
     configuration.OverrideDefaultResultFactoryWith<ProblemDetailsResultFactory>();
 });
 builder.Services.AddResponseCaching();
+
+builder.Services.AddIdentity<BarberShopClient, IdentityRole>()
+    .AddEntityFrameworkStores<ForumDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(configureOptions: options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters.ValidAudience = builder.Configuration["Jwt:ValidAudience"];
+    options.TokenValidationParameters.ValidIssuer = builder.Configuration["Jwt:ValidIssuer"];
+    options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]));
+});
+
+builder.Services.AddAuthorization();
+
 
 var app = builder.Build();
 
@@ -99,7 +124,7 @@ servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbCont
 
 servicesGroups.MapPost("/services", async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
-    var service = new Service { Name = dto.Name, Price = dto.Price };
+    var service = new Service { Name = dto.Name, Price = dto.Price, BarberShopClientID = "" };
     dbContext.Services.Add(service);
     
     await dbContext.SaveChangesAsync();
@@ -234,7 +259,7 @@ servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceI
     }
 
     // Create a new reservation associated with the given serviceId
-    var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date};
+    var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date, BarberShopClientID = "" };
     dbContext.Reservations.Add(reservation);
 
     await dbContext.SaveChangesAsync();
@@ -386,7 +411,7 @@ servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/revie
     }
 
     // Create a new review and associate it with the correct reservation
-    var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating };
+    var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating, BarberShopClientID = "" };
     dbContext.Reviews.Add(review);
 
     await dbContext.SaveChangesAsync();
@@ -469,6 +494,8 @@ servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/rev
 
 app.MapControllers();
 app.UseResponseCaching();
+app.UseAuthentication();
+app.UseAuthorization();
 app.Run();
 
 static IEnumerable<LinkDto> CreateLinksForSingleTopic(int serviceId, LinkGenerator linkGenerator, HttpContext httpContext)

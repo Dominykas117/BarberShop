@@ -20,15 +20,15 @@ public static class Endpoints
             var service = await dbContext.Services.FindAsync(serviceId);
             return service == null ? Results.NotFound() : TypedResults.Ok(service.ToDto());
         });
-        servicesGroups.MapPost("/services", async (CreateServiceDto dto, ForumDbContext dbContext) =>
-        {
-            var service = new Service { Name = dto.Name, Price = dto.Price };
-            dbContext.Services.Add(service);
+        //servicesGroups.MapPost("/services", async (CreateServiceDto dto, ForumDbContext dbContext) =>
+        //{
+        //    var service = new Service { Name = dto.Name, Price = dto.Price };
+        //    dbContext.Services.Add(service);
 
-            await dbContext.SaveChangesAsync();
+        //    await dbContext.SaveChangesAsync();
     
-            return TypedResults.Created($"api/services/{service.Id}", service.ToDto());
-        });
+        //    return TypedResults.Created($"api/services/{service.Id}", service.ToDto());
+        //});
         servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int serviceId, ForumDbContext dbContext) =>
         {
             var service = await dbContext.Services.FindAsync(serviceId);
@@ -76,19 +76,19 @@ public static class Endpoints
 
 
         // Create a reservation for a service
-        servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceId, CreateReservationDto dto, ForumDbContext dbContext) =>
-        {
-            if (dto == null)
-            {
-                return Results.BadRequest("Invalid reservation data.");
-            }
+        //servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceId, CreateReservationDto dto, ForumDbContext dbContext) =>
+        //{
+        //    if (dto == null)
+        //    {
+        //        return Results.BadRequest("Invalid reservation data.");
+        //    }
 
-            var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date };  // Set ServiceId
-            dbContext.Reservations.Add(reservation);
-            await dbContext.SaveChangesAsync();
+        //    var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date };  // Set ServiceId
+        //    dbContext.Reservations.Add(reservation);
+        //    await dbContext.SaveChangesAsync();
 
-            return Results.Created($"/api/services/{serviceId}/reservations/{reservation.Id}", reservation.ToDto());
-        }).Produces<ReservationDto>(201).Produces(400).Produces(422);
+        //    return Results.Created($"/api/services/{serviceId}/reservations/{reservation.Id}", reservation.ToDto());
+        //}).Produces<ReservationDto>(201).Produces(400).Produces(422);
 
         servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
         {
@@ -167,19 +167,19 @@ public static class Endpoints
 
 
         // Create a review for a reservation
-        servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", async (int serviceId, int reservationId, CreateReviewDto dto, ForumDbContext dbContext) =>
-        {
-            if (dto == null)
-            {
-                return Results.BadRequest("Invalid review data.");
-            }
+        //servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", async (int serviceId, int reservationId, CreateReviewDto dto, ForumDbContext dbContext) =>
+        //{
+        //    if (dto == null)
+        //    {
+        //        return Results.BadRequest("Invalid review data.");
+        //    }
 
-            var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating };  // Set ReservationId
-            dbContext.Reviews.Add(review);
-            await dbContext.SaveChangesAsync();
+        //    var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating };  // Set ReservationId
+        //    dbContext.Reviews.Add(review);
+        //    await dbContext.SaveChangesAsync();
 
-            return Results.Created($"/api/services/{serviceId}/reservations/{reservationId}/reviews/{review.Id}", review.ToDto());
-        }).Produces<ReviewDto>(201).Produces(400).Produces(422);
+        //    return Results.Created($"/api/services/{serviceId}/reservations/{reservationId}/reviews/{review.Id}", review.ToDto());
+        //}).Produces<ReviewDto>(201).Produces(400).Produces(422);
 
         servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
         {

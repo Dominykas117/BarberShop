@@ -1,4 +1,6 @@
-﻿using System.Xml.Linq;
+﻿using DemoRest2024Live.Auth.Model;
+using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
 
 namespace DemoRest2024Live.Data.Entities;
 
@@ -12,7 +14,9 @@ public class Reservation
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public Service Service { get; set; }
-
+    [Required]
+    public required string BarberShopClientID { get; set; }
+    public BarberShopClient BarberShopClient { get; set; }
     public ReservationDto ToDto()
     {
         return new ReservationDto(Id, Date, Status, IsDeleted, ServiceId);
