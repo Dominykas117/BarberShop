@@ -18,6 +18,7 @@ dotnet add package SharpGrip.FluentValidation.AutoValidation.Endpoints
 using System.Text;
 using System.Text.Json;
 using DemoRest2024Live;
+using DemoRest2024Live.Auth;
 using DemoRest2024Live.Auth.Model;
 using DemoRest2024Live.Data;
 using DemoRest2024Live.Data.Entities;
@@ -45,6 +46,9 @@ builder.Services.AddFluentValidationAutoValidation(configuration =>
     configuration.OverrideDefaultResultFactoryWith<ProblemDetailsResultFactory>();
 });
 builder.Services.AddResponseCaching();
+builder.Services.AddTransient<JwtTokenService>();
+builder.Services.AddTransient<SessionService>();
+builder.Services.AddScoped<AuthSeeder>();
 
 builder.Services.AddIdentity<BarberShopClient, IdentityRole>()
     .AddEntityFrameworkStores<ForumDbContext>()
@@ -68,6 +72,11 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<ForumDbContext>();
+
+var dbSeeder = scope.ServiceProvider.GetRequiredService<AuthSeeder>();
+await dbSeeder.SeedAsync();
 /*
     /api/v1/service GET List 200
     /api/v1/service POST Create 201
@@ -77,6 +86,8 @@ var app = builder.Build();
  */
 
 // app.AddTopicApi();
+
+app.AddAuthApi();
 
 app.MapGet("api", (HttpContext httpContext, LinkGenerator linkGenerator) => Results.Ok(new List<LinkDto>
 {

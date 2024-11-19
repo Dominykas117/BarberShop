@@ -11,7 +11,9 @@ public class ForumDbContext : IdentityDbContext<BarberShopClient>
     public DbSet<Service> Services { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<Review> Reviews { get; set; }
-    
+    public DbSet<Session> Sessions { get; set; }
+
+
     public ForumDbContext(IConfiguration configuration)
     {
         _configuration = configuration;
