@@ -15,6 +15,8 @@ dotnet add package SharpGrip.FluentValidation.AutoValidation.Endpoints
 
 */
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using DemoRest2024Live;
@@ -26,6 +28,7 @@ using DemoRest2024Live.Helpers;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -133,9 +136,11 @@ servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbCont
     return service == null ? Results.NotFound() : TypedResults.Ok(service.ToDto());
 }).WithName("GetService").AddEndpointFilter<ETagFilter>();
 
-servicesGroups.MapPost("/services", async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+
+
+servicesGroups.MapPost("/services", [Authorize(Roles = BarberShopRoles.BarberShopClient)] async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
-    var service = new Service { Name = dto.Name, Price = dto.Price, BarberShopClientID = "" };
+    var service = new Service { Name = dto.Name, Price = dto.Price, BarberShopClientID = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) };
     dbContext.Services.Add(service);
     
     await dbContext.SaveChangesAsync();
@@ -147,12 +152,21 @@ servicesGroups.MapPost("/services", async (CreateServiceDto dto, LinkGenerator l
     return TypedResults.Created(links[0].Href, resource);
 }).WithName("CreateService");
 
-servicesGroups.MapPut("/services/{serviceId}", async (UpdateServiceDto dto, int serviceId, ForumDbContext dbContext) =>
+
+
+servicesGroups.MapPut("/services/{serviceId}", [Authorize] async (UpdateServiceDto dto, int serviceId, HttpContext httpContext, ForumDbContext dbContext) =>
 {
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)
     {
         return Results.NotFound();
+    }
+
+    if(!httpContext.User.IsInRole(BarberShopRoles.Admin) && 
+        httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != service.BarberShopClientID)
+    {
+        //NotFound()
+        return Results.Forbid();
     }
 
     service.Price = dto.Price;
