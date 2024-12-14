@@ -1,7 +1,7 @@
-﻿using DemoRest2024Live.Auth.Model;
-using Microsoft.AspNetCore.Identity;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using DemoRest2024Live.Auth.Model;
+using Microsoft.AspNetCore.Identity;
 
 namespace DemoRest2024Live.Auth
 {
@@ -10,7 +10,9 @@ namespace DemoRest2024Live.Auth
         public static void AddAuthApi(this WebApplication app)
         {
             // register
-            app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
+            app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto, string role) =>
+
+            //app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
             {
                 // check user exists
                 var user = await userManager.FindByNameAsync(dto.UserName);
@@ -28,13 +30,20 @@ namespace DemoRest2024Live.Auth
                 if (!createUserResult.Succeeded)
                     return Results.UnprocessableEntity();
 
-                await userManager.AddToRoleAsync(newUser, BarberShopRoles.BarberShopClient);
+                if (!BarberShopRoles.All.Contains(role))
+                    return Results.BadRequest("Invalid role.");
+
+
+                await userManager.AddToRoleAsync(newUser, role);
+
+                //await userManager.AddToRoleAsync(newUser, BarberShopRoles.BarberShopClient);
 
                 return Results.Created();
             });
 
             // login
-            app.MapPost("api/login", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService, SessionService sessionService, HttpContext httpContext, LoginDto dto) =>
+            app.MapPost("api/login", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService,
+                SessionService sessionService, HttpContext httpContext, LoginDto dto) =>
             {
                 // check user exists
                 var user = await userManager.FindByNameAsync(dto.UserName);
@@ -104,7 +113,6 @@ namespace DemoRest2024Live.Auth
                 var accessToken = jwtTokenService.CreateAccessToken(user.UserName, user.Id, roles);
                 var newRefreshToken = jwtTokenService.CreateRefreshToken(sessionIdAsGuid, user.Id, expiresAt);
 
-
                 var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
@@ -120,7 +128,8 @@ namespace DemoRest2024Live.Auth
                 return Results.Ok(new SuccessfulLoginDto(accessToken));
             });
 
-            app.MapPost("api/logout", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService, SessionService sessionService, HttpContext httpContext) =>
+            app.MapPost("api/logout", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService,
+                SessionService sessionService, HttpContext httpContext) =>
             {
                 if (!httpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
                 {
@@ -143,7 +152,57 @@ namespace DemoRest2024Live.Auth
 
                 return Results.Ok();
             });
+
+            //        app.MapPost("api/logout", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService,
+            //SessionService sessionService, ITokenBlacklistService tokenBlacklistService, HttpContext httpContext) =>
+            //        {
+            //            // 1. Retrieve Refresh Token from Cookies
+            //            if (!httpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
+            //            {
+            //                return Results.UnprocessableEntity("Refresh token is missing.");
+            //            }
+
+            //            // 2. Parse the Refresh Token and Extract Claims
+            //            if (!jwtTokenService.TryParseRefreshToken(refreshToken, out var claims))
+            //            {
+            //                return Results.UnprocessableEntity("Invalid refresh token.");
+            //            }
+
+            //            // 3. Extract and Validate Session ID
+            //            var sessionId = claims.FindFirstValue("SessionId");
+            //            if (string.IsNullOrWhiteSpace(sessionId))
+            //            {
+            //                return Results.UnprocessableEntity("Session ID is missing.");
+            //            }
+
+            //            // 4. Invalidate the Session
+            //            await sessionService.InvalidateSessionAsync(Guid.Parse(sessionId));
+
+            //            // 5. Blacklist the Access Token (Optional, if included in the Authorization header)
+            //            if (httpContext.Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
+            //            {
+            //                var accessToken = authorizationHeader.ToString().Split(" ").Last();
+            //                if (jwtTokenService.TryParseAccessToken(accessToken, out var accessTokenClaims))
+            //                {
+            //                    var tokenId = accessTokenClaims.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            //                    if (!string.IsNullOrWhiteSpace(tokenId))
+            //                    {
+            //                        await tokenBlacklistService.AddToBlacklistAsync(tokenId);
+            //                    }
+            //                }
+            //            }
+
+            //            // 6. Remove Refresh Token Cookie
+            //            httpContext.Response.Cookies.Delete("RefreshToken");
+
+            //            // 7. Return Success
+            //            return Results.Ok("Logged out successfully.");
+            //        });
+
+
+
         }
+
 
         public record RegisterUserDto(string UserName, string Email, string Password);
         public record LoginDto(string UserName, string Password);

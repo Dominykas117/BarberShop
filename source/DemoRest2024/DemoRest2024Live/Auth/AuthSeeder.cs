@@ -18,6 +18,8 @@ namespace DemoRest2024Live.Auth
         {
             await AddDefaultRolesAsync();
             await AddAdminUserAsync();
+            await AddTeacherUserAsync(); // Call the method here
+
         }
 
         private async Task AddAdminUserAsync()
@@ -32,7 +34,7 @@ namespace DemoRest2024Live.Auth
             if (existingAdminUser == null)
             {
                 var createAdminUserResult = await _userManager.CreateAsync(newAdminUser, "VerySafePassword1!");
-                // !!!!!!!!!!!!Important!!!!!!!!!42:30 prisideti 5 environmental variables kad nebutu hardcoded!!!!!!!!!!! 
+                // !!!!!!!!!!!!Important!!!!!!!!!42:30 prisideti į environmental variables kad nebutu hardcoded!!!!!!!!!!! 
                 if (createAdminUserResult.Succeeded)
                 {
                     await _userManager.AddToRolesAsync(newAdminUser, BarberShopRoles.All);
@@ -47,6 +49,26 @@ namespace DemoRest2024Live.Auth
                 var roleExists = await _roleManager.RoleExistsAsync(role);
                 if (!roleExists)
                     await _roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+
+        // Optionally create a teacher account for testing:
+        private async Task AddTeacherUserAsync()
+        {
+            var newTeacherUser = new BarberShopClient()
+            {
+                UserName = "teacher",
+                Email = "teacher@barbershop.com"
+            };
+
+            var existingTeacherUser = await _userManager.FindByNameAsync(newTeacherUser.UserName);
+            if (existingTeacherUser == null)
+            {
+                var createTeacherUserResult = await _userManager.CreateAsync(newTeacherUser, "SafePassword1!");
+                if (createTeacherUserResult.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(newTeacherUser, BarberShopRoles.BarberShopTeacher);
+                }
             }
         }
     }

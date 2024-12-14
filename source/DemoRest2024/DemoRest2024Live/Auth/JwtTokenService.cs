@@ -10,11 +10,15 @@ namespace DemoRest2024Live.Auth
         private readonly SymmetricSecurityKey _authSigningKey;
         private readonly string? _issuer;
         private readonly string? _audience;
-        public JwtTokenService(IConfiguration configuration)
+        private readonly TokenValidationParameters _validationParameters;
+
+
+        public JwtTokenService(IConfiguration configuration, TokenValidationParameters validationParameters)
         {
             _authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]));
             _issuer = configuration["JWT:ValidIssuer"];
             _audience = configuration["JWT:ValidAudience"];
+            _validationParameters = validationParameters;
         }
 
         public string CreateAccessToken(string userName, string userId, IEnumerable<string> roles)
@@ -31,7 +35,7 @@ namespace DemoRest2024Live.Auth
             var token = new JwtSecurityToken(
                 issuer: _issuer,
                 audience: _audience,
-                expires: DateTime.Now.AddMinutes(20), //sakė turėtų būti iki 10 min
+                expires: DateTime.Now.AddMinutes(5), //sakė turėtų būti iki 10 min
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(_authSigningKey, SecurityAlgorithms.HmacSha256) //čia minimaliausiai saugus algoritmas
             );
@@ -82,6 +86,32 @@ namespace DemoRest2024Live.Auth
                 return false;
             }
         }
+
+        public bool TryParseAccessToken(string token, out ClaimsPrincipal claims)
+        {
+            claims = null;
+
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+
+                // Validate the token
+                var principal = tokenHandler.ValidateToken(token, _validationParameters, out var validatedToken);
+
+                // Ensure the token is a valid JWT
+                if (validatedToken is JwtSecurityToken jwtToken)
+                {
+                    claims = principal;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if necessary (optional)
+                Console.WriteLine($"Failed to parse token: {ex.Message}");
+            }
+
+            return false;
+        }
     }
 }
-
