@@ -594,11 +594,11 @@ async (int serviceId, int reservationId, int reviewId, HttpContext httpContext, 
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-
-app.MapControllers();
+app.UseRouting();
 app.UseResponseCaching();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 app.Run();
 
 static IEnumerable<LinkDto> CreateLinksForSingleTopic(int serviceId, LinkGenerator linkGenerator, HttpContext httpContext)
