@@ -8,7 +8,7 @@ WORKDIR /App
 
 # Copy everything
 #COPY . ./  #Skiriasi video ir githube codas. cia is githubo.
-COPY C:/Users/domin/OneDrive/Desktop/KTU IV metai/Bakalauras/Barbershop/BarberShop/source/DemoRest2024/DemoRest2024Live
+COPY C:/Users/domin/OneDrive/Desktop/KTU_IV_metai/Bakalauras/Barbershop/BarberShop/source/DemoRest2024/DemoRest2024Live
 # Restore as distinct layers
 RUN dotnet restore
 # Build and publish a release
