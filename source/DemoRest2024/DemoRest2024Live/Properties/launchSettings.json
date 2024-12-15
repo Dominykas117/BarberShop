@@ -1,14 +1,13 @@
 {
-  "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
       "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
       "dotnetRunMessages": true,
       "launchBrowser": false, // toki turi Simonas,as neturejau
       "applicationUrl": "http://localhost:5097"
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
     }
     //"Container (Dockerfile)": {
     //  "commandName": "Docker",
@@ -19,6 +18,7 @@
     //  "publishAllPorts": true,
     //  "useSSL": false
     //}
-  }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json"
 }
 
