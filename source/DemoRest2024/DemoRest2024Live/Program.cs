@@ -336,7 +336,7 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", [Aut
 async (UpdateReservationDto dto, int serviceId, int reservationId, HttpContext httpContext, ForumDbContext dbContext) =>
 {
 //servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
-{
+//{
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)

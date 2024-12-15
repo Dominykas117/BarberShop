@@ -10,9 +10,9 @@ namespace DemoRest2024Live.Auth
         public static void AddAuthApi(this WebApplication app)
         {
             // register
-            app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto, string role) =>
+             //app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto, string role) =>
 
-            //app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
+            app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
             {
                 // check user exists
                 var user = await userManager.FindByNameAsync(dto.UserName);
@@ -30,13 +30,13 @@ namespace DemoRest2024Live.Auth
                 if (!createUserResult.Succeeded)
                     return Results.UnprocessableEntity();
 
-                if (!BarberShopRoles.All.Contains(role))
-                    return Results.BadRequest("Invalid role.");
+                //if (!BarberShopRoles.All.Contains(role))
+                //    return Results.BadRequest("Invalid role.");
 
 
-                await userManager.AddToRoleAsync(newUser, role);
+                //await userManager.AddToRoleAsync(newUser, role);
 
-                //await userManager.AddToRoleAsync(newUser, BarberShopRoles.BarberShopClient);
+                await userManager.AddToRoleAsync(newUser, BarberShopRoles.BarberShopClient);
 
                 return Results.Created();
             });
