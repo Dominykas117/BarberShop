@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using DemoRest2024Live.Auth.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace DemoRest2024Live.Auth
@@ -12,7 +13,7 @@ namespace DemoRest2024Live.Auth
             // register
              //app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto, string role) =>
 
-            app.MapPost("api/accounts", async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
+            app.MapPost("api/accounts", [AllowAnonymous] async (UserManager<BarberShopClient> userManager, RegisterUserDto dto) =>
             {
                 // check user exists
                 var user = await userManager.FindByNameAsync(dto.UserName);
@@ -42,7 +43,7 @@ namespace DemoRest2024Live.Auth
             });
 
             // login
-            app.MapPost("api/login", async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService,
+            app.MapPost("api/login", [AllowAnonymous] async (UserManager<BarberShopClient> userManager, JwtTokenService jwtTokenService,
                 SessionService sessionService, HttpContext httpContext, LoginDto dto) =>
             {
                 // check user exists
