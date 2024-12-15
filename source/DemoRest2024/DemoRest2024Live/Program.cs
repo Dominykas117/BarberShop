@@ -1,4 +1,4 @@
-/*
+﻿/*
  dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet add package Microsoft.EntityFrameworkCore.Tools
 
@@ -35,6 +35,10 @@ using Microsoft.IdentityModel.Tokens;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Results;
 using SharpGrip.FluentValidation.AutoValidation.Shared.Extensions;
+
+//šitus buvau pridėjęs darydamas log out. Galimai nereikalingi.
+//using Microsoft.IdentityModel.JsonWebTokens;
+//using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,7 +92,7 @@ app.UseCors();
 
 using var scope = app.Services.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<ForumDbContext>();
-
+//dbContext.Database.Migrate(); pagooglint ar reikia
 var dbSeeder = scope.ServiceProvider.GetRequiredService<AuthSeeder>();
 await dbSeeder.SeedAsync();
 /*
@@ -140,17 +144,25 @@ servicesGroups.MapGet("/services", async ([AsParameters] SearchParameters search
     return new ResourceDto<ResourceDto<ServiceDto>[]>(resources, links);
 }).WithName("GetServices");
 
-
-servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
+servicesGroups.MapGet("/services/{serviceId}", [Authorize] async (int serviceId, HttpContext httpContext, ForumDbContext dbContext) =>
+//servicesGroups.MapGet("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
 {
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != service.BarberShopClientID)
+    {
+        //NotFound()
+        return Results.Forbid();
+    }
     return service == null ? Results.NotFound() : TypedResults.Ok(service.ToDto());
 }).WithName("GetService").AddEndpointFilter<ETagFilter>();
 
-
-
-servicesGroups.MapPost("/services", [Authorize(Roles = BarberShopRoles.BarberShopClient)] async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+servicesGroups.MapPost("/services", [Authorize(Roles = BarberShopRoles.BarberShopTeacher)]
+async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+//servicesGroups.MapPost("/services", [Authorize(Roles = BarberShopRoles.BarberShopClient)]
+//async (CreateServiceDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+//{
     var service = new Service { Name = dto.Name, Price = dto.Price, BarberShopClientID = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) };
     dbContext.Services.Add(service);
     
@@ -162,8 +174,6 @@ servicesGroups.MapPost("/services", [Authorize(Roles = BarberShopRoles.BarberSho
     
     return TypedResults.Created(links[0].Href, resource);
 }).WithName("CreateService");
-
-
 
 servicesGroups.MapPut("/services/{serviceId}", [Authorize] async (UpdateServiceDto dto, int serviceId, HttpContext httpContext, ForumDbContext dbContext) =>
 {
@@ -207,7 +217,8 @@ servicesGroups.MapPut("/services/{serviceId}", [Authorize] async (UpdateServiceD
 //    return Results.Ok(service.ToDto());
 //}).WithName("RemoveService");
 
-servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
+servicesGroups.MapDelete("/services/{serviceId}", [Authorize] async (int serviceId, HttpContext httpContext, ForumDbContext dbContext) =>
+//servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbContext dbContext) =>
 {
     // Retrieve the service with the given ID and check if it is already deleted
     var service = await dbContext.Services
@@ -218,6 +229,13 @@ servicesGroups.MapDelete("/services/{serviceId}", async (int serviceId, ForumDbC
     if (service == null)
     {
         return Results.NotFound();
+    }
+
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != service.BarberShopClientID)
+    {
+        //NotFound()
+        return Results.Forbid();
     }
 
     // Mark the service as deleted
@@ -284,15 +302,20 @@ servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}", asyn
         : TypedResults.Ok(reservation.ToDto());
 }).WithName("GetReservation").AddEndpointFilter<ETagFilter>();
 
-
-servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceId, CreateReservationDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+servicesGroups.MapPost("/services/{serviceId}/reservations", [Authorize(Roles = BarberShopRoles.BarberShopClient)]
+async (int serviceId, CreateReservationDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+//servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceId, CreateReservationDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+//{
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)
     {
         return Results.NotFound();
     }
+    
+    
+    //var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date, BarberShopClientID = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) };
 
     // Create a new reservation associated with the given serviceId
     var reservation = new Reservation { ServiceId = serviceId, Date = dto.Date, BarberShopClientID = "" };
@@ -309,8 +332,10 @@ servicesGroups.MapPost("/services/{serviceId}/reservations", async (int serviceI
     return TypedResults.Created(links[0].Href, resource);
 }).WithName("CreateReservation");
 
-
-servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
+servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", [Authorize]
+async (UpdateReservationDto dto, int serviceId, int reservationId, HttpContext httpContext, ForumDbContext dbContext) =>
+{
+//servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", async (UpdateReservationDto dto, int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
@@ -325,7 +350,14 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", asyn
         return Results.NotFound();
     }
 
-    if (!Enum.TryParse<ReservationStatus>(dto.Status, true, out var status))
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+        !httpContext.User.IsInRole(BarberShopRoles.BarberShopTeacher) &&
+        httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != reservation.BarberShopClientID)
+    {
+        return Results.Forbid();
+    }
+
+        if (!Enum.TryParse<ReservationStatus>(dto.Status, true, out var status))
     {
         return Results.BadRequest("Invalid status value.");
     }
@@ -355,7 +387,8 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}", asyn
 //    return Results.Ok(reservation.ToDto());
 //}).WithName("RemoveReservation");
 
-servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
+servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", [Authorize] async (int serviceId, int reservationId, HttpContext httpContext, ForumDbContext dbContext) =>
+//servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", async (int serviceId, int reservationId, ForumDbContext dbContext) =>
 {
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
@@ -372,6 +405,13 @@ servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}", a
     if (reservation == null)
     {
         return Results.NotFound();
+    }
+
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != reservation.BarberShopClientID)
+    {
+        //NotFound()
+        return Results.Forbid();
     }
 
     // Mark the reservation as deleted instead of removing it
@@ -420,8 +460,11 @@ servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/review
     return new ResourceDto<ResourceDto<ReviewDto>[]>(resources, links);
 }).WithName("GetReviews");
 
-servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
-{
+servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}",
+    async (int serviceId, int reservationId, int reviewId, HttpContext httpContext, ForumDbContext dbContext) =>
+    {
+    //servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
+//{
     var review = await dbContext.Reviews
         .FirstOrDefaultAsync(r => r.Id == reviewId && r.ReservationId == reservationId && !r.IsDeleted);
 
@@ -430,8 +473,11 @@ servicesGroups.MapGet("/services/{serviceId}/reservations/{reservationId}/review
         : TypedResults.Ok(review.ToDto());
 }).WithName("GetReview").AddEndpointFilter<ETagFilter>();
 
-servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", async (int serviceId, int reservationId, CreateReviewDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", [Authorize(Roles = BarberShopRoles.BarberShopClient)]
+async (int serviceId, int reservationId, CreateReviewDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+//servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/reviews", async (int serviceId, int reservationId, CreateReviewDto dto, LinkGenerator linkGenerator, HttpContext httpContext, ForumDbContext dbContext) =>
+//{
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)
@@ -448,6 +494,7 @@ servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/revie
 
     // Create a new review and associate it with the correct reservation
     var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating, BarberShopClientID = "" };
+    //var review = new Review { ReservationId = reservationId, Content = dto.Content, Rating = dto.Rating, BarberShopClientID = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) };
     dbContext.Reviews.Add(review);
 
     await dbContext.SaveChangesAsync();
@@ -461,8 +508,11 @@ servicesGroups.MapPost("/services/{serviceId}/reservations/{reservationId}/revie
 }).WithName("CreateReview");
 
 
-servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (UpdateReviewDto dto, int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
+servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", [Authorize]
+async (UpdateReviewDto dto, int serviceId, int reservationId, int reviewId, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+//servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (UpdateReviewDto dto, int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
+//{
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)
@@ -484,6 +534,13 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/review
         return Results.NotFound();
     }
 
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != review.BarberShopClientID)
+    {
+        //NotFound()
+        return Results.Forbid();
+    }
+
     // Update the review content and rating
     review.Content = dto.Content;
     review.Rating = dto.Rating;
@@ -494,8 +551,11 @@ servicesGroups.MapPut("/services/{serviceId}/reservations/{reservationId}/review
     return Results.Ok(review.ToDto());
 }).WithName("UpdateReview");
 
-servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
+servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", [Authorize]
+async (int serviceId, int reservationId, int reviewId, HttpContext httpContext, ForumDbContext dbContext) =>
 {
+//servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/reviews/{reviewId}", async (int serviceId, int reservationId, int reviewId, ForumDbContext dbContext) =>
+//{
     // Check if the service or reservation is deleted
     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceId && !s.IsDeleted);
     if (service == null)
@@ -514,6 +574,13 @@ servicesGroups.MapDelete("/services/{serviceId}/reservations/{reservationId}/rev
     if (review == null)
     {
         return Results.NotFound();
+    }
+
+    if (!httpContext.User.IsInRole(BarberShopRoles.Admin) &&
+        !httpContext.User.IsInRole(BarberShopRoles.BarberShopTeacher) &&
+        httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != reservation.BarberShopClientID)
+    {
+        return Results.Forbid();
     }
 
     // Mark the review as deleted instead of removing it
