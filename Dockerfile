@@ -7,9 +7,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0@sha256:35792ea4ad1db051981f62b313f1be3b46b
 WORKDIR /App
 
 # Copy everything
-#COPY . ./  #Skiriasi video ir githube codas. cia is githubo.
+COPY . ./  
+#Skiriasi video ir githube codas. cia virsuj is githubo.
 #COPY C:/Users/domin/OneDrive/Desktop/KTU_IV_metai/Bakalauras/Barbershop/BarberShop/source/DemoRest2024/DemoRest2024Live
-COPY source/DemoRest2024/DemoRest2024Live
+#COPY source/DemoRest2024/DemoRest2024Live
 # Restore as distinct layers
 RUN dotnet restore
 # Build and publish a release
